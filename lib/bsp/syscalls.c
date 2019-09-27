@@ -121,13 +121,13 @@ void __attribute__((noreturn)) sys_exit(int code)
         continue;
 }
 
-static int sys_nosys(long a0, long a1, long a2, long a3, long a4, long a5, unsigned long n)
+static int sys_nosys(long a0, long a1, long a2, long a3, long a4, long a5, unsigned long n,uintptr_t epc)
 {
     UNUSED(a3);
     UNUSED(a4);
     UNUSED(a5);
 
-    LOGE(TAG, "Unsupported syscall %ld: a0=%lx, a1=%lx, a2=%lx!\r\n", n, a0, a1, a2);
+    LOGE(TAG, "Unsupported syscall %ld: a0=%lx, a1=%lx, a2=%lx!@%p\r\n", n, a0, a1, a2,epc);
     while (1)
         continue;
     return -ENOSYS;
@@ -328,7 +328,7 @@ handle_ecall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs
         SYS_ID_MAX
     };
 
-    static uintptr_t (* const syscall_table[])(long a0, long a1, long a2, long a3, long a4, long a5, unsigned long n) =
+    static uintptr_t (* const syscall_table[])(long a0, long a1, long a2, long a3, long a4, long a5, unsigned long n,uintptr_t epc) =
     {
         [SYS_ID_NOSYS]         = (void *)sys_nosys,
         [SYS_ID_SUCCESS]       = (void *)sys_success,
@@ -400,7 +400,8 @@ handle_ecall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs
         regs[13], /* a3 */
         regs[14], /* a4 */
         regs[15], /* a5 */
-        regs[17]  /* n */
+        regs[17],  /* n */
+	epc
     );
 
     return epc + 4;
@@ -615,9 +616,13 @@ handle_fault_store(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t
     return epc;
 }
 
+extern
+int usermode;
+
 uintptr_t handle_syscall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs[32])
 {
-
+  int pu = usermode;
+  usermode = 0;
     static uintptr_t (* const cause_table[])(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs[32]) =
     {
         [CAUSE_MISALIGNED_FETCH]      = handle_misaligned_fetch,
@@ -634,7 +639,9 @@ uintptr_t handle_syscall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uin
         [CAUSE_MACHINE_ECALL]         = handle_ecall_m,
     };
 
-    return cause_table[cause](cause, epc, regs, fregs);
+    uintptr_t r= cause_table[cause](cause, epc, regs, fregs);
+    usermode = pu;
+    return r;
 }
 
 size_t get_free_heap_size(void)

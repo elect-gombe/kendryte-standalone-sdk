@@ -25,7 +25,9 @@
 extern "C" {
 #endif
 
-#define DUMP_PRINTF printk
+#define DUMP_PRINTF printk2
+  int printk2(const char *format, ...);
+
 
 static inline void
 dump_core(const char *reason, uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs[32])

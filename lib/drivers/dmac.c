@@ -741,8 +741,13 @@ int dmac_is_idle(dmac_channel_number_t channel_num)
 
 void dmac_wait_idle(dmac_channel_number_t channel_num)
 {
-    while(!dmac_is_idle(channel_num));
-    dmac_chanel_interrupt_clear(channel_num); /* clear interrupt */
+  int printk2(const char *format, ...);
+  uint32_t timeout = 1000000;
+  while(--timeout&&!dmac_is_idle(channel_num));
+  if(!timeout){
+    printk2("Time out\n");
+  }
+  dmac_chanel_interrupt_clear(channel_num); /* clear interrupt */
 }
 
 void dmac_set_src_dest_length(dmac_channel_number_t channel_num, const void *src, void *dest, size_t len)

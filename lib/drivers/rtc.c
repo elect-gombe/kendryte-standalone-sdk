@@ -74,9 +74,9 @@ int rtc_timer_set_mode(rtc_timer_mode_t timer_mode)
     /* Set threshold to 1/26000000 s */
     freq = freq / 26000000;
     /* Get current CPU cycle */
-    unsigned long start_cycle = read_csr(mcycle);
+    unsigned long start_cycle = get_cycle();
     /* Wait for 1/26000000 s to sync data */
-    while(read_csr(mcycle) - start_cycle < freq)
+    while(get_cycle() - start_cycle < freq)
         continue;
 
     rtc->register_ctrl = register_ctrl;

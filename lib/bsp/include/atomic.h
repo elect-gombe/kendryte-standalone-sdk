@@ -16,10 +16,11 @@
 #ifndef _BSP_ATOMIC_H
 #define _BSP_ATOMIC_H
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "csrr.h"
 
 #define SPINLOCK_INIT \
     {                 \
@@ -135,10 +136,8 @@ static inline int semaphore_waiting(semaphore_t *semaphore)
 static inline int corelock_trylock(corelock_t *lock)
 {
     int res = 0;
-    unsigned long core;
+    unsigned long core=get_hartid();
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
     if(spinlock_trylock(&lock->lock))
     {
         return -1;
@@ -169,10 +168,8 @@ static inline int corelock_trylock(corelock_t *lock)
 
 static inline void corelock_lock(corelock_t *lock)
 {
-    unsigned long core;
+  unsigned long core=get_hartid();
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
     spinlock_lock(&lock->lock);
 
     if (lock->count == 0)
@@ -203,10 +200,8 @@ static inline void corelock_lock(corelock_t *lock)
 
 static inline void corelock_unlock(corelock_t *lock)
 {
-    unsigned long core;
+    unsigned long core=get_hartid();
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
     spinlock_lock(&lock->lock);
 
     if (lock->core == core)
@@ -224,14 +219,14 @@ static inline void corelock_unlock(corelock_t *lock)
         /* Different core release lock */
         spinlock_unlock(&lock->lock);
 
-        register unsigned long a7 asm("a7") = 93;
-        register unsigned long a0 asm("a0") = 0;
-        register unsigned long a1 asm("a1") = 0;
-        register unsigned long a2 asm("a2") = 0;
+        /* register unsigned long a7 asm("a7") = 93; */
+        /* register unsigned long a0 asm("a0") = 0; */
+        /* register unsigned long a1 asm("a1") = 0; */
+        /* register unsigned long a2 asm("a2") = 0; */
 
-        asm volatile("scall"
-                     : "+r"(a0)
-                     : "r"(a1), "r"(a2), "r"(a7));
+        /* asm volatile("scall" */
+        /*              : "+r"(a0) */
+        /*              : "r"(a1), "r"(a2), "r"(a7)); */
     }
     spinlock_unlock(&lock->lock);
 }

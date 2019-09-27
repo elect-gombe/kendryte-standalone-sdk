@@ -70,7 +70,7 @@ void plic_init(void)
     }
 
     /* Enable machine external interrupts. */
-    set_csr(mie, MIP_MEIP);
+    set_mie(MIP_MEIP);
 }
 
 int plic_irq_enable(plic_irq_t irq_number)
@@ -161,9 +161,12 @@ plic_instance_t (*plic_get_instance(void))[IRQN_MAX]
 }
 
 /*Entry Point for PLIC Interrupt Handler*/
+extern int usermode;
 uintptr_t __attribute__((weak))
 handle_irq_m_ext(uintptr_t cause, uintptr_t epc)
 {
+  int pu = usermode;
+  usermode = 0;
     /*
      * After the highest-priority pending interrupt is claimed by a target
      * and the corresponding IP bit is cleared, other lower-priority
@@ -174,12 +177,12 @@ handle_irq_m_ext(uintptr_t cause, uintptr_t epc)
      * without first restoring the interrupted context and taking another
      * interrupt trap.
      */
-    if (read_csr(mip) & MIP_MEIP)
+    if (get_mip() & MIP_MEIP)
     {
         /* Get current core id */
         uint64_t core_id = current_coreid();
         /* Get primitive interrupt enable flag */
-        uint64_t ie_flag = read_csr(mie);
+        uint64_t ie_flag = get_mie();
         /* Get current IRQ num */
         uint32_t int_num = plic->targets.target[core_id].claim_complete;
         /* Get primitive IRQ threshold */
@@ -187,23 +190,24 @@ handle_irq_m_ext(uintptr_t cause, uintptr_t epc)
         /* Set new IRQ threshold = current IRQ threshold */
         plic->targets.target[core_id].priority_threshold = plic->source_priorities.priority[int_num];
         /* Disable software interrupt and timer interrupt */
-        clear_csr(mie, MIP_MTIP | MIP_MSIP);
+        clr_mie(MIP_MTIP | MIP_MSIP);
         /* Enable global interrupt */
-        set_csr(mstatus, MSTATUS_MIE);
+        set_status(MSTATUS_MIE);
         if (plic_instance[core_id][int_num].callback)
             plic_instance[core_id][int_num].callback(
                 plic_instance[core_id][int_num].ctx);
         /* Perform IRQ complete */
         plic->targets.target[core_id].claim_complete = int_num;
         /* Disable global interrupt */
-        clear_csr(mstatus, MSTATUS_MIE);
+        clr_status( MSTATUS_MIE);
         /* Set MPIE and MPP flag used to MRET instructions restore MIE flag */
-        set_csr(mstatus, MSTATUS_MPIE | MSTATUS_MPP);
+        set_status( MSTATUS_MPIE);
         /* Restore primitive interrupt enable flag */
-        write_csr(mie, ie_flag);
+        wri_mie(ie_flag);
         /* Restore primitive IRQ threshold */
         plic->targets.target[core_id].priority_threshold = int_threshold;
     }
 
+    usermode = pu;
     return epc;
 }

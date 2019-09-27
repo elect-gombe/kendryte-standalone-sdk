@@ -88,7 +88,7 @@ static void prvTaskExitError(void);
 
 UBaseType_t uxPortGetProcessorId()
 {
-    return (UBaseType_t)read_csr(mhartid);
+    return (UBaseType_t)get_hartid();
 }
 
 /*-----------------------------------------------------------*/
@@ -99,7 +99,8 @@ void vPortSetupTimer(void)
     UBaseType_t uxPsrId = uxPortGetProcessorId();
     clint->mtimecmp[uxPsrId] = clint->mtime + (configTICK_CLOCK_HZ / configTICK_RATE_HZ);
     /* Enable timer and soft interupt */
-    __asm volatile("csrs mie,%0" ::"r"(0x88));
+    set_mie(0x88);
+    //    __asm volatile("csrs mie,%0" ::"r"(0x88));
 }
 
 /*-----------------------------------------------------------*/
@@ -132,7 +133,8 @@ void prvTaskExitError(void)
 /* Clear current interrupt mask and set given mask */
 void vPortClearInterruptMask(int mask)
 {
-    __asm volatile("csrw mie, %0" ::"r"(mask));
+  wri_mie(mask);
+  //    __asm volatile("csrw mie, %0" ::"r"(mask));
 }
 /*-----------------------------------------------------------*/
 
@@ -140,9 +142,11 @@ void vPortClearInterruptMask(int mask)
 int vPortSetInterruptMask(void)
 {
     int ret;
-    __asm volatile("csrr %0,mie"
-                   : "=r"(ret));
-    __asm volatile("csrc mie,%0" ::"i"(7));
+    ret=get_mie();
+    //    __asm volatile("csrr %0,mie"
+    //                   : "=r"(ret));
+    clr_mie(7);
+    //    __asm volatile("csrc mie,%0" ::"i"(7));
     return ret;
 }
 /*-----------------------------------------------------------*/

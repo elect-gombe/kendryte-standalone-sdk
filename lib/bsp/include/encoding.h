@@ -15,6 +15,8 @@
 #ifndef RISCV_CSR_ENCODING_H
 #define RISCV_CSR_ENCODING_H
 
+#include "csrr.h"
+
 #define MSTATUS_UIE         0x00000001U
 #define MSTATUS_SIE         0x00000002U
 #define MSTATUS_HIE         0x00000004U
@@ -209,9 +211,9 @@
     asm volatile ("csrrc %0, " #reg ", %1" : "=r"(__tmp) : "r"(bit)); \
   __tmp; })
 
-#define read_time()         read_csr(mtime)
-#define read_cycle()        read_csr(mcycle)
-#define current_coreid()       read_csr(mhartid)
+//#define read_time()         read_csr(mtime) unused?
+#define read_cycle()        get_cycle()
+#define current_coreid()       get_hartid()
 
 #endif
 

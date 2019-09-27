@@ -1813,14 +1813,14 @@ uint32_t sysctl_cpu_set_freq(uint32_t freq)
 
 void sysctl_enable_irq(void)
 {
-    set_csr(mie, MIP_MEIP);
-    set_csr(mstatus, MSTATUS_MIE);
+    set_mie(MIP_MEIP);
+    set_status(MSTATUS_MIE);
 }
 
 void sysctl_disable_irq(void)
 {
-    clear_csr(mie, MIP_MEIP);
-    clear_csr(mstatus, MSTATUS_MIE);
+    clr_mie(MIP_MEIP);
+    clr_status(MSTATUS_MIE);
 }
 
 uint64_t sysctl_get_time_us(void)

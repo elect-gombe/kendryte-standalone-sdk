@@ -70,9 +70,9 @@ extern "C" {
 #define stats(code, iter)                                                                         \
     do                                                                                            \
     {                                                                                             \
-        unsigned long _c = -read_cycle(), _i = -read_csr(minstret);                           \
+        unsigned long _c = -get_cycle(), _i = -get_instret();                           \
         code;                                                                                     \
-        _c += read_cycle(), _i += read_csr(minstret);                                         \
+        _c += read_cycle(), _i += get_instret();                                         \
         if (cid == 0)                                                                             \
             printf("\r\n%s: %ld cycles, %ld.%ld cycles/iter, %ld.%ld CPI\r\n",                        \
                 stringify(code), _c, _c / iter, 10 * _c / iter % 10, _c / _i, 10 * _c / _i % 10); \

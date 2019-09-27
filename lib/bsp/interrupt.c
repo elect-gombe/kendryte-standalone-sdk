@@ -39,12 +39,16 @@ handle_irq_m_timer(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t
 extern uintptr_t
 handle_irq_m_ext(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs[32]);
 
+extern
+int usermode;
+
 uintptr_t __attribute__((weak))
 handle_irq(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs[32])
 {
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverride-init"
 #endif
+
     /* clang-format off */
     static uintptr_t (* const irq_table[])(
         uintptr_t cause,

@@ -111,8 +111,7 @@ static inline int reculock_trylock(_lock_t *lock)
     int res = 0;
     unsigned long core;
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
+    core = get_hartid();
     if(lock_trylock(lock))
     {
         return -1;
@@ -156,8 +155,7 @@ static inline void reculock_lock(_lock_t *lock)
 {
     unsigned long core;
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
+    core=get_hartid();
     lock_lock(lock);
 
     reculock_t *v_reculock = get_reculock(lock);
@@ -200,8 +198,7 @@ static inline void reculock_unlock(_lock_t *lock)
 {
     unsigned long core;
 
-    asm volatile("csrr %0, mhartid;"
-                 : "=r"(core));
+    core=get_hartid();
     lock_lock(lock);
 
     reculock_t *v_reculock = get_reculock(lock);
